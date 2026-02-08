@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>調の長短スイッチャー</title>
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#0b0f1a;color:#e9eefc}
+    header{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:rgba(11,15,26,.92);backdrop-filter: blur(10px)}
+    h1{margin:0;font-size:18px}
+    .wrap{padding:16px;max-width:900px;margin:0 auto}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;margin:12px 0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    select,button{background:#111a33;color:#e9eefc;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:10px 12px;font-size:14px}
+    button{cursor:pointer}
+    button.active{outline:2px solid rgba(255,255,255,.35)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);margin:6px 6px 0 0}
+    .muted{opacity:.75}
+    .hi{font-weight:700}
+    .delta{color:#ffd166}
+    .note{font-variant-numeric:tabular-nums}
+    footer{opacity:.7;font-size:12px;padding:16px;text-align:center}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap row" style="justify-content:space-between">
+    <h1>調の長短スイッチャー（Major ↔ Minor）</h1>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <label class="muted">Key：</label>
+      <select id="keySel"></select>
+
+      <label class="muted" style="margin-left:6px">Mode：</label>
+      <div class="row" style="gap:8px">
+        <button id="majBtn" class="active">Major</button>
+        <button id="minBtn">Minor</button>
+      </div>
+    </div>
+
+    <div class="row muted" style="margin-top:10px">
+      <span class="pill">同主調：<span class="hi" id="parallelText"></span></span>
+      <span class="pill">相対調：<span class="hi" id="relativeText"></span></span>
+      <span class="pill">差分：<span class="hi delta" id="diffText"></span></span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="hi">スケール</div>
+      <div id="scaleBox" class="note" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="hi">ダイアトニックコード</div>
+      <div id="chordBox" class="note" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <footer>index.html 1枚で動作します</footer>
+</div>
+
+<script>
+  const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const MAJOR = [0,2,4,5,7,9,11];
+  const MINOR = [0,2,3,5,7,8,10];
+  const QUAL_MAJ = ["","m","m","","","m","dim"];
+  const QUAL_MIN = ["m","dim","","m","m","",""];
+
+  const keySel = document.getElementById("keySel");
+  const majBtn = document.getElementById("majBtn");
+  const minBtn = document.getElementById("minBtn");
+  const scaleBox = document.getElementById("scaleBox");
+  const chordBox = document.getElementById("chordBox");
+  const parallelText = document.getElementById("parallelText");
+  const relativeText = document.getElementById("relativeText");
+  const diffText = document.getElementById("diffText");
+
+  NOTES.forEach(n=>{
+    const o=document.createElement("option");
+    o.value=n;o.textContent=n;keySel.appendChild(o);
+  });
+
+  let mode="major";
+
+  function idx(n){return NOTES.indexOf(n);}
+  function note(r,s){return NOTES[(r+s)%12];}
+
+  function render(){
+    const root=keySel.value;
+    const r=idx(root);
+    const steps=mode==="major"?MAJOR:MINOR;
+    const qual=mode==="major"?QUAL_MAJ:QUAL_MIN;
+
+    scaleBox.innerHTML=steps.map(s=>`<span class="pill">${note(r,s)}</span>`).join("");
+    chordBox.innerHTML=steps.map((s,i)=>`<span class="pill">${note(r,s)}${qual[i]}</span>`).join("");
+
+    parallelText.textContent=`${root} Major ↔ ${root} Minor`;
+    relativeText.textContent=mode==="major"
+      ? `${root} Major ↔ ${note(r,9)} Minor`
+      : `${root} Minor ↔ ${note(r,3)} Major`;
+    diffText.textContent=mode==="major"
+      ? "3,6,7度が♭になる"
+      : "3,6,7度が♮になる";
+  }
+
+  majBtn.onclick=()=>{mode="major";majBtn.classList.add("active");minBtn.classList.remove("active");render();}
+  minBtn.onclick=()=>{mode="minor";minBtn.classList.add("active");majBtn.classList.remove("active");render();}
+  keySel.onchange=render;
+
+  keySel.value="C";
+  render();
+</script>
+</body>
+</html>
